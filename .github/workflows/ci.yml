@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --release
+
+  relevance:
+    # Guards ranking quality: SciFact nDCG@10 must not regress.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release --bin sifter
+      - run: |
+          mkdir -p data && cd data
+          curl -sSLO https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip && unzip -q scifact.zip
+      - run: |
+          ./target/release/sifter index /tmp/s data/scifact/corpus.jsonl
+          ./target/release/sifter eval /tmp/s data/scifact/queries.jsonl data/scifact/qrels/test.tsv | tee eval.json
+          python3 -c 'import json; d=json.load(open("eval.json")); assert d["ndcg@10"] >= 0.68, d'
+          ./target/release/sifter eval /tmp/s data/scifact/queries.jsonl data/scifact/qrels/test.tsv --bmw | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["ndcg@10"] >= 0.68, d'

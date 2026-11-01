@@ -1,0 +1,22 @@
+{
+  "fiqa": {
+    "exhaustive": {
+      "mean_scored_docs_k10": 28498.1,
+      "queries": 648
+    },
+    "bmw": {
+      "mean_scored_docs_k10": 1517.0,
+      "queries": 648
+    }
+  },
+  "fiqa20": {
+    "exhaustive": {
+      "mean_scored_docs_k10": 569962.3,
+      "queries": 648
+    },
+    "bmw": {
+      "mean_scored_docs_k10": 9135.3,
+      "queries": 648
+    }
+  }
+}

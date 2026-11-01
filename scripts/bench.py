@@ -49,7 +49,9 @@ def main():
         _, err, rss = rss_and_out([SIFTER, "index", d, corpus])
         run([SIFTER, "merge", d])
         size = sum(os.path.getsize(os.path.join(d, f)) for f in os.listdir(d) if f.endswith(".sft"))
-        entry = {"docs": int(err.split()[1]), "index_line": err.strip(), "index_rss_bytes": rss, "index_bytes": size}
+        line = next(l for l in err.splitlines() if l.startswith("indexed "))
+        entry = {"docs": int(line.split()[1]), "index_s": float(line.split()[-1].rstrip("s")),
+                 "index_rss_bytes": rss, "index_bytes": size}
         configs = {
             "sifter exhaustive k1=0.9 b=0.4": [],
             "sifter exhaustive k1=1.2 b=0.75": ["--k1", "1.2", "--b", "0.75"],

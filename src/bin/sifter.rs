@@ -147,13 +147,15 @@ fn eval(dir: &Path, queries: &str, qrels: &str, p: Bm25, algo: Algorithm) -> R {
     let (mut ndcg, mut recall, mut mrr, mut n) = (0.0, 0.0, 0.0, 0);
     let mut lat = Vec::new();
     let mut lat10 = Vec::new();
+    let mut scored10 = 0u64;
     for qid in qids {
         let Some(text) = texts.get(qid) else { continue };
         let t0 = Instant::now();
         let (hits, _) = s.search(text, 100, algo);
         lat.push(t0.elapsed().as_secs_f64() * 1000.0);
         let t1 = Instant::now();
-        let _ = s.search(text, 10, algo);
+        let (_, st10) = s.search(text, 10, algo);
+        scored10 += st10.scored_docs;
         lat10.push(t1.elapsed().as_secs_f64() * 1000.0);
         let ranked: Vec<String> = hits.into_iter().map(|h| h.id).collect();
         let r = &qrels[qid];
@@ -166,7 +168,7 @@ fn eval(dir: &Path, queries: &str, qrels: &str, p: Bm25, algo: Algorithm) -> R {
     lat10.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let q = |v: &Vec<f64>, p: f64| v[((v.len() - 1) as f64 * p) as usize];
     println!(
-        "{{\"engine\": \"sifter\", \"algorithm\": \"{algo:?}\", \"queries\": {n}, \"ndcg@10\": {:.4}, \"recall@100\": {:.4}, \"mrr@10\": {:.4}, \"k1\": {}, \"b\": {}, \"p50_ms_k100\": {:.3}, \"p99_ms_k100\": {:.3}, \"p50_ms_k10\": {:.3}, \"p99_ms_k10\": {:.3}}}",
+        "{{\"engine\": \"sifter\", \"algorithm\": \"{algo:?}\", \"queries\": {n}, \"ndcg@10\": {:.4}, \"recall@100\": {:.4}, \"mrr@10\": {:.4}, \"k1\": {}, \"b\": {}, \"p50_ms_k100\": {:.3}, \"p99_ms_k100\": {:.3}, \"p50_ms_k10\": {:.3}, \"p99_ms_k10\": {:.3}, \"mean_scored_docs_k10\": {:.1}}}",
         ndcg / n as f64,
         recall / n as f64,
         mrr / n as f64,
@@ -175,7 +177,8 @@ fn eval(dir: &Path, queries: &str, qrels: &str, p: Bm25, algo: Algorithm) -> R {
         q(&lat, 0.5),
         q(&lat, 0.99),
         q(&lat10, 0.5),
-        q(&lat10, 0.99)
+        q(&lat10, 0.99),
+        scored10 as f64 / n as f64
     );
     Ok(())
 }

@@ -110,7 +110,6 @@ fn merge_and_reopen_preserve_results() {
         // concatenates segments in order.
         assert_eq!(&got, want, "{q}");
     }
-    drop(s);
     drop(idx);
     let idx = Index::open(&dir).unwrap();
     let s = Searcher::new(&idx, Bm25::default());

@@ -10,7 +10,7 @@ A BM25 full-text search engine in Rust, with an mmap'd segment format, bitpacked
 
 ## Why this exists
 
-Search engine tutorials usually stop at an inverted index in a `HashMap` and a score loop, and they never check whether the results are any good. sifter is built the way production engines are: immutable on-disk segments, block-compressed postings with per-block score bounds, and dynamic pruning. It is measured the way IR research is, with standard BEIR test collections, graded relevance judgments and trec_eval-style metrics, against a mature engine configured identically. A CI job downloads SciFact and fails the build if nDCG@10 drops below 0.68.
+Search engine tutorials usually stop at an inverted index in a `HashMap` and a score loop, and they never check whether the results are any good. sifter is built the way production engines are: immutable on-disk segments, block-compressed postings with per-block score bounds, and dynamic pruning. It is measured the way IR research is, with standard BEIR test collections, graded relevance judgments and trec_eval-style metrics, against a mature engine configured identically. A CI job downloads SciFact and fails the build if nDCG@10 (k1=1.2, b=0.75) drops below 0.68, or if block-max WAND and exhaustive evaluation disagree.
 
 The second goal was to find out whether block-max WAND is worth its complexity at laptop scale. In this implementation it is not; the details are below.
 
@@ -145,7 +145,7 @@ sifter indexes on one thread, and its time excludes the separate `merge` step. t
 | Postings | bitpacking round-trips at every width from 0 to 32; seek and block-metadata tests |
 | Analysis | 76 Porter reference cases; the full pipeline, with stop words, possessives, digits and non-ASCII |
 | Metrics | nDCG/Recall/MRR against hand-computed values |
-| Relevance regression | CI downloads SciFact and asserts nDCG@10 ≥ 0.68 for both exhaustive and BMW |
+| Relevance regression | CI downloads SciFact, asserts nDCG@10 ≥ 0.68 at k1=1.2/b=0.75, and asserts that BMW and exhaustive produce identical metrics |
 | Lints | `cargo clippy --all-targets -D warnings`, `cargo fmt --check` |
 
 ## Limitations and roadmap

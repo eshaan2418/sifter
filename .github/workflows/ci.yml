@@ -33,6 +33,7 @@ jobs:
           curl -sSLO https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip && unzip -q scifact.zip
       - run: |
           ./target/release/sifter index /tmp/s data/scifact/corpus.jsonl
-          ./target/release/sifter eval /tmp/s data/scifact/queries.jsonl data/scifact/qrels/test.tsv | tee eval.json
-          python3 -c 'import json; d=json.load(open("eval.json")); assert d["ndcg@10"] >= 0.68, d'
-          ./target/release/sifter eval /tmp/s data/scifact/queries.jsonl data/scifact/qrels/test.tsv --bmw | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["ndcg@10"] >= 0.68, d'
+          # k1=1.2, b=0.75 scores 0.6827 (bench/results/beir.json); BMW must match exactly.
+          ./target/release/sifter eval /tmp/s data/scifact/queries.jsonl data/scifact/qrels/test.tsv --k1 1.2 --b 0.75 | tee exh.json
+          ./target/release/sifter eval /tmp/s data/scifact/queries.jsonl data/scifact/qrels/test.tsv --k1 1.2 --b 0.75 --bmw | tee bmw.json
+          python3 -c 'import json; e=json.load(open("exh.json")); w=json.load(open("bmw.json")); assert e["ndcg@10"] >= 0.68, e; assert (e["ndcg@10"], e["recall@100"]) == (w["ndcg@10"], w["recall@100"]), (e, w)'

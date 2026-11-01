@@ -7,7 +7,7 @@ measures latency at scale only (its ids do not match the qrels).
 """
 import json, os, platform, shutil, statistics, subprocess, sys, tempfile, time
 
-RUNS = int(os.environ.get("RUNS", "5"))
+RUNS = int(sys.argv[1]) if len(sys.argv) > 1 else 5  # usage: bench.py [runs]
 SIFTER = "target/release/sifter"
 TANTIVY = "target/release/examples/tantivy_baseline"
 DATA = "data"
